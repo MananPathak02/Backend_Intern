@@ -61,6 +61,6 @@ curl -X GET http://127.0.0.1:8000/tasks
 
 ## Swagger UI
 
-Below is the Swagger UI for the Task API.
+
 
 ![Swagger UI](swagger.png)
