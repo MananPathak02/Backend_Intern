@@ -1,29 +1,32 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from app.database import (
+    create_db_and_tables,
+    insert_sample_data,
+    engine,
+    Task,
+)
+from sqlmodel import Session, select
 
 app = FastAPI(
     title="Task API",
     version="1.0.0",
     description="Week 2 Backend Internship CRUD API"
 )
+create_db_and_tables()
+insert_sample_data()
 
-tasks = [
-    {
-        "id": 1,
-        "title": "Learn FastAPI",
-        "done": False
-    },
-    {
-        "id": 2,
-        "title": "Do Assignment",
-        "done": False
-    },
-    {
-        "id": 3,
-        "title": "Sleep",
-        "done": True
-    }
-]
+def insert_sample_data():
+    with Session(engine) as session:
+
+        statement = select(Task)
+        tasks = session.exec(statement).all()
+
+        if len(tasks) == 0:
+            session.add(Task(title="Learn FastAPI", done=False))
+            session.add(Task(title="Do Assignment", done=False))
+            session.add(Task(title="Sleep", done=True))
+            session.commit()
 
 
 class TaskCreate(BaseModel):
@@ -55,20 +58,23 @@ def health():
 
 @app.get("/tasks", summary="Get All Tasks")
 def get_tasks():
-    return tasks
+    with Session(engine) as session:
+        tasks = session.exec(select(Task)).all()
+        return tasks
 
 
 @app.get("/tasks/{id}", summary="Get Task By ID")
 def get_task(id: int):
+    with Session(engine) as session:
+        task = session.get(Task, id)
 
-    for task in tasks:
-        if task["id"] == id:
-            return task
+        if task is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Task {id} not found"
+            )
 
-    raise HTTPException(
-        status_code=404,
-        detail=f"Task {id} not found"
-    )
+        return task
 
 
 @app.post("/tasks", status_code=201, summary="Create Task")
@@ -80,15 +86,17 @@ def create_task(task: TaskCreate):
             detail="Title cannot be empty"
         )
 
-    new_task = {
-        "id": len(tasks) + 1,
-        "title": task.title,
-        "done": False
-    }
+    with Session(engine) as session:
+        new_task = Task(
+            title=task.title,
+            done=False
+        )
 
-    tasks.append(new_task)
+        session.add(new_task)
+        session.commit()
+        session.refresh(new_task)
 
-    return new_task
+        return new_task
 
 
 @app.put("/tasks/{id}", summary="Update Task")
@@ -100,27 +108,38 @@ def update_task(id: int, updated_task: TaskUpdate):
             detail="Title cannot be empty"
         )
 
-    for task in tasks:
-        if task["id"] == id:
-            task["title"] = updated_task.title
-            task["done"] = updated_task.done
-            return task
+    with Session(engine) as session:
+        task = session.get(Task, id)
 
-    raise HTTPException(
-        status_code=404,
-        detail=f"Task {id} not found"
-    )
+        if task is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Task {id} not found"
+            )
+
+        task.title = updated_task.title
+        task.done = updated_task.done
+
+        session.add(task)
+        session.commit()
+        session.refresh(task)
+
+        return task
 
 
 @app.delete("/tasks/{id}", status_code=204, summary="Delete Task")
 def delete_task(id: int):
 
-    for index, task in enumerate(tasks):
-        if task["id"] == id:
-            tasks.pop(index)
-            return
+    with Session(engine) as session:
+        task = session.get(Task, id)
 
-    raise HTTPException(
-        status_code=404,
-        detail=f"Task {id} not found"
-    )
+        if task is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Task {id} not found"
+            )
+
+        session.delete(task)
+        session.commit()
+
+        return

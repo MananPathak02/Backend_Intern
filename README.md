@@ -1,6 +1,6 @@
 # Task API
 
-A simple CRUD API built using FastAPI for Week 2 Backend Internship Assignment.
+A simple CRUD Task Management API built using **FastAPI** and **SQLite**.
 
 ## Features
 
@@ -9,7 +9,25 @@ A simple CRUD API built using FastAPI for Week 2 Backend Internship Assignment.
 - Read Task by ID
 - Update Tasks
 - Delete Tasks
+- SQLite Database Integration
+- Data Persists After Server Restart
 - Swagger Documentation
+
+---
+
+## Why SQLite?
+
+SQLite was chosen because it is lightweight, requires no separate database server, and stores all data in a single file (`tasks.db`). It is perfect for small backend applications and learning SQL.
+
+---
+
+## Database
+
+- Database: SQLite
+- Database File: `tasks.db`
+- Table Name: `task`
+
+The database and table are automatically created when the application starts.
 
 ---
 
@@ -24,10 +42,10 @@ pip install -r requirements.txt
 ## Run
 
 ```bash
-python -m uvicorn main:app --reload
+python -m uvicorn app.main:app --reload
 ```
 
-Open
+Open Swagger UI:
 
 ```
 http://127.0.0.1:8000/docs
@@ -49,18 +67,37 @@ http://127.0.0.1:8000/docs
 
 ---
 
-## Sample curl
+## Example SQL Query
 
-```bash
-curl -X GET http://127.0.0.1:8000/tasks
+```sql
+SELECT * FROM task;
 ```
 
 ---
 
-## Swagger
+## Project Structure
+
+```
+FlyRank_AI_Backend_Intern/
+│
+├── app/
+│   ├── main.py
+│   └── database.py
+│
+├── requirements.txt
+├── README.md
+├── swagger.png
+└── database.png
+```
+
+---
+
+## Database Screenshot
+
+![Database](database.png)
+
+---
 
 ## Swagger UI
-
-
 
 ![Swagger UI](swagger.png)
